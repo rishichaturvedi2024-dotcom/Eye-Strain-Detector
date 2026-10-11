@@ -93,7 +93,9 @@ def main():
     print(f"[{time.strftime('%H:%M:%S')}] [VISION] Initializing FaceLandmarker model...")
     detector = create_face_landmarker()
 
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    if not cap.isOpened():
+        cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         print("[VISION] Error: Camera device not accessible.")
         return
