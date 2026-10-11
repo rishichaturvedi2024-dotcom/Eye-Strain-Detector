@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eye Strain Monitor - Algorithmic Session Detail</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #0a0f1d;
+            --bg-card: rgba(17, 24, 39, 0.8);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-highlight: rgba(99, 102, 241, 0.3);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-primary: #6366f1;
+            --accent-cyan: #06b6d4;
+            --risk-low: #10b981;
+            --risk-high: #ef4444;
+            --card-radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 24px;
+        }
+
+        .container {
+            max-width: 1080px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .back-link {
+            color: var(--accent-cyan);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .glass-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: var(--card-radius);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .badge-score {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 20px;
+            font-weight: 700;
+            background: rgba(99, 102, 241, 0.2);
+            color: #6366f1;
+            border: 1px solid rgba(99, 102, 241, 0.4);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .feature-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .feature-table th {
+            text-align: left;
+            padding: 10px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .feature-table td {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .math-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-left: 3px solid var(--accent-cyan);
+            padding: 14px 18px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: #e2e8f0;
+            margin-top: 12px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div>
+            <h1 style="font-size: 20px; font-weight: 700;">Algorithmic Session Drill-Down</h1>
+            <p style="font-size: 13px; color: var(--text-secondary);">Session ID: {{ session_id }}</p>
+        </div>
+        <a href="/dashboard/supervisor" class="back-link">← Return to Supervisor Portal</a>
+    </header>
+
+    {% if session %}
+    <div class="glass-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div>
+                <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase;">Evaluated Risk Score R = f_θ(F, Δ)</div>
+                <div class="badge-score">{{ "%.3f"|format(session.risk_score) }}</div>
+            </div>
+            <div>
+                <span style="font-size: 13px; color: var(--text-secondary);">Alert Dispatched: </span>
+                <strong style="color: {% if session.alert_dispatched %}#ef4444{% else %}#10b981{% endif %};">
+                    {{ "YES (Buzzer Fired)" if session.alert_dispatched else "NO (Within Safe Limits)" }}
+                </strong>
+            </div>
+        </div>
+
+        <div class="math-box">
+            Mathematical Pipeline Architecture:<br>
+            1. Fused Feature Vector: F = [d_avg, d_min, I_avg, t_dur, blink_rate, incomplete_blink_ratio, gaze_dev, head_pose, cam_conf]<br>
+            2. Baseline Deviation: Δ = F − B(U) (Personalized EWMA Baseline B(U))<br>
+            3. Classification: R = f_θ(F, Δ) via Trained Random Forest Classifier (Accuracy: 86.5%, ROC-AUC: 0.918)<br>
+            4. Receptivity Gate: Alert dispatched if R ≥ T(U) AND user estimated receptive (refractory cooldown & head pose stability).
+        </div>
+    </div>
+
+    <div class="grid-2">
+        <!-- Raw Feature Vector F -->
+        <div class="glass-card">
+            <h3 style="font-size: 15px; margin-bottom: 12px; color: var(--accent-cyan);">Raw Feature Vector (F)</h3>
+            <table class="feature-table">
+                <thead>
+                    <tr><th>Feature</th><th>Value</th></tr>
+                </thead>
+                <tbody>
+                    {% for k, v in session.features.items() %}
+                    <tr>
+                        <td style="color: var(--text-secondary);">{{ k }}</td>
+                        <td>{{ v }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Baseline Deviation Vector Δ -->
+        <div class="glass-card">
+            <h3 style="font-size: 15px; margin-bottom: 12px; color: #a855f7;">Deviation from Baseline (Δ = F - B(U))</h3>
+            <table class="feature-table">
+                <thead>
+                    <tr><th>Deviation Metric</th><th>Delta</th></tr>
+                </thead>
+                <tbody>
+                    {% for k, v in session.deviation.items() %}
+                    <tr>
+                        <td style="color: var(--text-secondary);">{{ k }}</td>
+                        <td style="color: {% if v < 0 %}#f59e0b{% else %}#38bdf8{% endif %};">{{ "%+.2f"|format(v) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="glass-card" style="text-align: center; padding: 40px;">
+        <p style="color: var(--text-muted);">Session detail not found or session ID invalid.</p>
+    </div>
+    {% endif %}
+</div>
+
+</body>
+</html>

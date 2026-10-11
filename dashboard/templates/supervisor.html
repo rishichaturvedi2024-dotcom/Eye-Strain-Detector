@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eye Strain Monitor - Supervisor Overview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-base: #0a0f1d;
+            --bg-card: rgba(17, 24, 39, 0.75);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-highlight: rgba(99, 102, 241, 0.3);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-primary: #6366f1;
+            --accent-cyan: #06b6d4;
+            --risk-low: #10b981;
+            --risk-med: #f59e0b;
+            --risk-high: #ef4444;
+            --card-radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-base);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.08) 0px, transparent 50%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 24px;
+        }
+
+        .container {
+            max-width: 1240px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .brand-section {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #6366f1, #06b6d4);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+        }
+
+        .brand-title h1 {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .brand-title p {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 12px;
+        }
+
+        .nav-button {
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            transition: all 0.2s;
+        }
+
+        .nav-button:hover, .nav-button.active {
+            color: var(--text-primary);
+            background: rgba(99, 102, 241, 0.15);
+            border-color: var(--border-highlight);
+        }
+
+        .glass-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: var(--card-radius);
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+            margin-bottom: 24px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .data-table th {
+            text-align: left;
+            padding: 12px 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+            border-bottom: 1px solid var(--border-color);
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.05em;
+        }
+
+        .data-table td {
+            padding: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: var(--text-secondary);
+        }
+
+        .data-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-primary);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-low {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--risk-low);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-moderate {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--risk-med);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .status-high {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--risk-high);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .select-student-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        .select-input {
+            padding: 10px 16px;
+            border-radius: 10px;
+            background: rgba(17, 24, 39, 0.9);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 260px;
+            width: 100%;
+        }
+
+        .view-btn {
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid var(--border-highlight);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .view-btn:hover {
+            background: rgba(99, 102, 241, 0.35);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="brand-section">
+            <div class="brand-icon">📊</div>
+            <div class="brand-title">
+                <h1>Supervisor Portal</h1>
+                <p>Cohort Eye-Strain Monitoring & Ergonomic Adherence Overview</p>
+            </div>
+        </div>
+
+        <div class="nav-links">
+            <a href="/dashboard/user1" class="nav-button">Student View 👁️</a>
+            <a href="/dashboard/supervisor" class="nav-button active">Supervisor View 📊</a>
+        </div>
+    </header>
+
+    <!-- Multi-Student Overview Table -->
+    <div class="glass-card">
+        <div class="card-header">
+            <div class="card-title">Laboratory / Classroom Student Cohort Status</div>
+            <span style="font-size: 12px; color: var(--text-muted);">Auto-refreshes live every 15s</span>
+        </div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Student ID</th>
+                    <th>Name</th>
+                    <th>Current Risk Score</th>
+                    <th>Risk State</th>
+                    <th>Compliance</th>
+                    <th>Alert Dispatches</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="cohortTableBody">
+                {% for s in summaries %}
+                <tr>
+                    <td style="font-family: 'JetBrains Mono', monospace; font-weight: 600;">{{ s.user_id }}</td>
+                    <td style="font-weight: 500; color: var(--text-primary);">{{ s.name }}</td>
+                    <td style="font-family: 'JetBrains Mono', monospace; font-weight: 600;">{{ "%.2f"|format(s.risk_score) }}</td>
+                    <td>
+                        <span class="status-badge status-{{ s.status }}">
+                            {{ s.status }}
+                        </span>
+                    </td>
+                    <td>
+                        <span style="font-family: 'JetBrains Mono', monospace; color: #10b981; font-weight: 600;">{{ s.compliance_pct }}%</span>
+                    </td>
+                    <td>{{ s.total_alerts }} dispatched</td>
+                    <td>
+                        <a href="/dashboard/{{ s.user_id }}" class="view-btn">Inspect Dashboard →</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Student Detail Inspection Card -->
+    <div class="glass-card">
+        <div class="card-header">
+            <div class="card-title">Detailed Trend Inspection for Selected Student</div>
+            <div class="select-student-row" style="margin-bottom: 0;">
+                <label for="inspectStudentSelect" style="font-size: 13px; color: var(--text-muted);">Select Student:</label>
+                <select id="inspectStudentSelect" class="select-input" onchange="loadStudentTrend(this.value)">
+                    {% for u in all_users %}
+                    <option value="{{ u.user_id }}">{{ u.name }} ({{ u.user_id }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="chart-wrapper">
+            <canvas id="supervisorTrendChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    let selectedStudent = document.getElementById('inspectStudentSelect').value || 'user1';
+
+    const ctx = document.getElementById('supervisorTrendChart').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Risk Score R',
+                data: [],
+                borderColor: '#06b6d4',
+                backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                borderWidth: 2,
+                pointRadius: 3,
+                fill: true,
+                tension: 0.3
+            }, {
+                label: 'Alert Threshold (0.60)',
+                data: [],
+                borderColor: 'rgba(239, 68, 68, 0.7)',
+                borderWidth: 1.5,
+                borderDash: [6, 4],
+                pointRadius: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { grid: { color: 'rgba(255, 255, 255, 0.04)' }, ticks: { color: '#64748b' } },
+                y: { min: 0.0, max: 1.0, grid: { color: 'rgba(255, 255, 255, 0.06)' }, ticks: { color: '#64748b' } }
+            }
+        }
+    });
+
+    async function loadStudentTrend(userId) {
+        selectedStudent = userId;
+        try {
+            const res = await fetch(`/api/risk_trend/${userId}?range=7d`);
+            const data = await res.json();
+            const labels = data.timestamps.map(ts => {
+                const d = new Date(ts);
+                return `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
+            });
+            chart.data.labels = labels;
+            chart.data.datasets[0].data = data.risk_scores;
+            chart.data.datasets[1].data = labels.map(() => 0.60);
+            chart.data.datasets[0].label = `Risk Score for ${userId}`;
+            chart.update();
+        } catch (e) {
+            console.error("Error loading student trend:", e);
+        }
+    }
+
+    async function reloadCohortSummary() {
+        try {
+            const res = await fetch('/api/supervisor_summary');
+            const summaries = await res.json();
+            const tbody = document.getElementById('cohortTableBody');
+            tbody.innerHTML = summaries.map(s => `
+                <tr>
+                    <td style="font-family: 'JetBrains Mono', monospace; font-weight: 600;">${s.user_id}</td>
+                    <td style="font-weight: 500; color: var(--text-primary);">${s.name}</td>
+                    <td style="font-family: 'JetBrains Mono', monospace; font-weight: 600;">${s.risk_score.toFixed(2)}</td>
+                    <td><span class="status-badge status-${s.status}">${s.status}</span></td>
+                    <td><span style="font-family: 'JetBrains Mono', monospace; color: #10b981; font-weight: 600;">${s.compliance_pct}%</span></td>
+                    <td>${s.total_alerts} dispatched</td>
+                    <td><a href="/dashboard/${s.user_id}" class="view-btn">Inspect Dashboard →</a></td>
+                </tr>
+            `).join('');
+        } catch (e) {
+            console.error("Error reloading cohort:", e);
+        }
+    }
+
+    loadStudentTrend(selectedStudent);
+    setInterval(() => {
+        reloadCohortSummary();
+        loadStudentTrend(selectedStudent);
+    }, 15000);
+</script>
+
+</body>
+</html>
