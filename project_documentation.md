@@ -103,22 +103,30 @@ blink_rate, head_pose" --> MQTT
 
 **Purpose**: ESP32 Arduino firmware — the physical hardware component.
 
-**Hardware Used**:
-| Component | Library | Pin(s) | Purpose |
+**Minimal Hardware Configuration (No Battery, No Vibration Motor)**:
+The edge hardware operates with zero batteries and zero electro-mechanical vibration motors. It is powered continuously via a standard 5V USB connection (PC USB port or USB power bank), and utilizes an active piezo buzzer directly driven from GPIO 23 for all alert cues.
+
+| Component | Library / Interface | Pin(s) / Connections | Purpose |
 |---|---|---|---|
-| HC-SR04 Ultrasonic Sensor | `NewPing` | TRIG=5, ECHO=18 | Measures screen-to-face distance (cm) |
-| BH1750 Light Sensor | `BH1750` | I2C (Wire) | Measures ambient illuminance (lux) |
-| Piezo Buzzer | — | Pin 19 | Alert actuation |
-| ESP32 WiFi | `WiFi.h` | — | Network connectivity |
+| **ESP32 DevKit V1** | `WiFi.h` | Micro-USB / Type-C (5V) | Main edge controller, Wi-Fi telemetry & MQTT client. Powered via USB (no 9V battery). |
+| **HC-SR04 Ultrasonic** | Direct `pulseIn()` (Native) | VCC -> 5V (VIN), GND -> GND, Trig -> GPIO 5, Echo -> GPIO 18 (via 1k/2k divider) | Measures screen-to-face viewing distance (cm). |
+| **1kΩ / 2kΩ Voltage Divider** | Passive Resistors | Echo (5V) -> 1kΩ -> GPIO 18 -> 2kΩ -> GND | Drops 5V Echo output down to safe 3.3V logic for the ESP32. |
+| **BH1750 Ambient Light** | `BH1750.h` / `Wire.h` (I2C) | VCC -> 3.3V, GND -> GND, SDA -> GPIO 21, SCL -> GPIO 22 | Calibrated ambient illuminance measurement (lux). |
+| **Active Buzzer** | Direct GPIO Drive | Buzzer (+) -> GPIO 23, Buzzer (-) -> GND | Acoustic alert actuation (250ms local burst, 800ms backend alert). Configurable active-high/low via `BUZZER_ACTIVE_HIGH`. |
 
 **How it works**:
-1. **`setup()`** — Initializes Serial, WiFi, I2C light sensor, MQTT connection, subscribes to `alert/user1`.
-2. **`loop()`** — Every 5 seconds:
-   - Reads distance from ultrasonic sensor via `sonar.ping_cm()`
-   - Reads lux from BH1750 via `lightMeter.readLightLevel()`
-   - **Local threshold check**: If `distance < 25cm` → short buzzer burst (immediate edge-side warning)
-   - Serializes data to JSON via ArduinoJson and publishes to MQTT topic `telemetry/user1`
-3. **`callback()`** — Listens on `alert/user1`. If backend sends `"TRUE"`, buzzes for 1 second (ML-driven alert).
+1. **Power-On & Setup (`setup()`)**:
+   - ESP32 powers on directly from the USB 5V rail (stepping down to 3.3V internally via its AMS1117 regulator).
+   - Initializes Serial (115200 baud), I2C bus (`Wire.begin(21, 22)`), and Wi-Fi station mode.
+   - Connects to the local MQTT broker (`1883`) and subscribes to `alert/user1`.
+   - **Self-Test**: Executes a 100 ms confirmation chirp on the active buzzer to verify buzzer polarity and functionality at boot.
+2. **Continuous Sensing & Filtering (`loop()`)**:
+   - **1-Second Polling**: Reads distance using a 3-ping median filter + exponential smoothing ($\alpha = 0.70$) via `pulseIn()`, and samples illuminance from BH1750 over I2C.
+   - **Local Safety Threshold**: If distance drops below 25 cm or ambient light drops below 30 lux, the ESP32 immediately sounds a 250 ms non-blocking local warning pulse on the buzzer without waiting for backend ML evaluation.
+   - **5-Second Batched Telemetry**: Formats `device_id`, `distance`, `lux`, and uptime `timestamp` into JSON using lightweight `snprintf` (zero external JSON library overhead) and publishes to `telemetry/user1`.
+3. **Remote ML Alert Handling (`mqttCallback()`)**:
+   - Listens on `alert/user1`. When the backend machine learning model detects high strain risk and publishes `"TRUE"`, the ESP32 executes an 800 ms non-blocking acoustic alert on the active buzzer.
+   - Filters strictly for `"TRUE"` or `"true"` strings, avoiding false triggers on numeric scores or negative status payloads.
 
 > [!IMPORTANT]
 > The firmware has **two alert mechanisms**: a **local threshold** (immediate, rule-based) and a **backend alert** (ML-driven, delayed but smarter). This dual-layer approach ensures the user gets fast warnings for extreme cases while the ML model handles nuanced risk assessment.

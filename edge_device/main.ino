@@ -33,11 +33,11 @@
 #include <BH1750.h>
 
 // ================= Configuration & Pin Definitions =================
-#define WIFI_SSID           "YOUR_SSID"          // Replace with your 2.4GHz Wi-Fi SSID
-#define WIFI_PASSWORD       "YOUR_PASSWORD"      // Replace with your Wi-Fi Password
-#define MQTT_BROKER_IP      "192.168.1.100"      // Replace with IP of your MQTT broker / backend
-#define MQTT_BROKER_PORT    1883
-#define DEVICE_ID           "user1"              // Device & User ID matching backend and dashboard
+#define WIFI_SSID        "Nahi Milega"                 // Replace with your 2.4GHz Wi-Fi SSID
+#define WIFI_PASSWORD     "11111111"      // Replace with your Wi-Fi Password
+#define MQTT_BROKER_IP    "10.14.134.203"      // Replace with IP of your MQTT broker / backend
+#define MQTT_BROKER_PORT   1883
+#define DEVICE_ID          "user1"              // Device & User ID matching backend and dashboard
 
 // Pin Definitions
 #define PIN_TRIG            5   // HC-SR04 Trigger (GPIO 5)

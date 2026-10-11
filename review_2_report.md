@@ -280,7 +280,8 @@ Best model (by AUC) was saved as `rf_risk_model.joblib` with its corresponding `
 | **HC-SR04 Ultrasonic** for distance | IR ToF sensor (VL53L0X), LiDAR | HC-SR04 costs ₹30–50 vs ₹350+ for ToF. Accuracy is sufficient (±1 cm at 2–400 cm). Non-contact, works regardless of skin tone/lighting unlike IR. |
 | **BH1750 Light Sensor** for lux | LDR (photoresistor), TSL2591 | BH1750 gives calibrated lux output directly via I2C — no ADC conversion needed, no manual calibration. LDR gives arbitrary analog values that vary unit to unit. |
 | **ESP32** microcontroller | Arduino Uno, Raspberry Pi, NodeMCU | Built-in WiFi + Bluetooth, dual-core 240MHz, enough GPIO, costs ₹400–500. Arduino Uno lacks WiFi natively. Raspberry Pi is overkill and 5× the cost. |
-| **Piezo Buzzer** for alerts | LED, screen notification | Auditory feedback doesn't require the user to look at anything — crucial for a system monitoring *not looking away from the screen*. |
+| **Active Buzzer** for alerts | LED, vibration motor, screen notification | Auditory feedback doesn't require the user to look away or wear a wearable device. Direct GPIO 23 drive eliminates complex motor driver circuits (transistors, diodes, motors) and provides crisp, immediate alerts. |
+| **5V USB Power** (PC/Power Bank) | 9V alkaline battery, Li-ion pack | A desktop/monitor setup has direct access to USB 5V. Eliminates bulky 9V batteries, voltage depletion, battery leakage, and ongoing battery replacement costs. |
 
 ### 3.2 Why This Algorithm / Software Stack?
 
@@ -317,10 +318,11 @@ Best model (by AUC) was saved as `rf_risk_model.joblib` with its corresponding `
 | ESP32 DevKit V1 | 450 | 1 | 450 |
 | HC-SR04 Ultrasonic Sensor | 40 | 1 | 40 |
 | BH1750 Light Sensor Module | 80 | 1 | 80 |
-| Piezo Buzzer | 15 | 1 | 15 |
+| Active Buzzer (5V/3.3V) | 15 | 1 | 15 |
+| Resistors (1kΩ, 2kΩ for Echo divider) | 5 | 2 | 10 |
 | Breadboard + Jumper Wires | 100 | 1 | 100 |
-| USB Cable (Micro USB) | 50 | 1 | 50 |
-| **Total Hardware Cost** | | | **₹735** |
+| USB Cable (Micro USB / Type-C) | 50 | 1 | 50 |
+| **Total Hardware Cost** | | | **₹745** |
 
 | Software | Cost |
 |---|---|
