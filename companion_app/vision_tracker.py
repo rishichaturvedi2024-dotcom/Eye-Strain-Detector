@@ -1,7 +1,7 @@
 """
 Companion Device Vision Tracker - On-Device Ocular & Posture Extraction
 ========================================================================
-Uses MediaPipe Face Mesh on local video feed to compute:
+Uses MediaPipe FaceLandmarker Tasks API on local video feed to compute:
   - Eye Aspect Ratio (EAR) for blink detection and incomplete blink ratio
   - Gaze deviation metric (relative iris / pupil displacement)
   - Head pose displacement
@@ -12,31 +12,47 @@ Note on Privacy Architecture:
   Only numerical features are published over MQTT to the backend broker.
 """
 
+import os
 import cv2
-import mediapipe as mp
-import paho.mqtt.client as mqtt
 import time
 import json
 import math
+import urllib.request
 import numpy as np
+import mediapipe as mp
+from mediapipe.tasks import python
+from mediapipe.tasks.python import vision
+import paho.mqtt.client as mqtt
 
 MQTT_BROKER = "localhost"
 MQTT_PORT = 1883
 USER_ID = "user1"
 BEHAVIOR_TOPIC = f"behavior/{USER_ID}"
 
-# Initialize MediaPipe Face Mesh
-mp_face_mesh = mp.solutions.face_mesh
-face_mesh = mp_face_mesh.FaceMesh(
-    max_num_faces=1,
-    refine_landmarks=True,
-    min_detection_confidence=0.5,
-    min_tracking_confidence=0.5
-)
-
 # Landmark indices for eyes
 LEFT_EYE = [33, 160, 158, 133, 153, 144]
 RIGHT_EYE = [362, 385, 387, 263, 373, 380]
+
+MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "face_landmarker.task")
+
+def ensure_model_file():
+    """Ensures the official MediaPipe face_landmarker.task model is available locally."""
+    if not os.path.exists(MODEL_PATH):
+        print(f"[{time.strftime('%H:%M:%S')}] [VISION] Downloading official face_landmarker.task model (~3.7MB)...")
+        url = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task"
+        urllib.request.urlretrieve(url, MODEL_PATH)
+        print(f"[{time.strftime('%H:%M:%S')}] [VISION] Model downloaded successfully ({os.path.getsize(MODEL_PATH)} bytes).")
+
+def create_face_landmarker():
+    """Initializes MediaPipe 1.1+ FaceLandmarker using Video running mode."""
+    ensure_model_file()
+    base_options = python.BaseOptions(model_asset_path=MODEL_PATH)
+    options = vision.FaceLandmarkerOptions(
+        base_options=base_options,
+        running_mode=vision.RunningMode.VIDEO,
+        num_faces=1
+    )
+    return vision.FaceLandmarker.create_from_options(options)
 
 def get_ear(eye_landmarks, all_landmarks, img_w, img_h):
     """Computes Eye Aspect Ratio (EAR) from vertical and horizontal eye landmark distances."""
@@ -74,6 +90,9 @@ def main():
     except Exception as e:
         print(f"[VISION] Warning: Could not connect to MQTT broker ({e}). Will retry...")
 
+    print(f"[{time.strftime('%H:%M:%S')}] [VISION] Initializing FaceLandmarker model...")
+    detector = create_face_landmarker()
+
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         print("[VISION] Error: Camera device not accessible.")
@@ -86,7 +105,8 @@ def main():
     EAR_INCOMPLETE_THRESH = 0.26
 
     last_publish = time.time()
-    print("Starting Vision Tracker loop (press ESC to quit)...")
+    last_frame_timestamp_ms = 0
+    print(f"[{time.strftime('%H:%M:%S')}] [VISION] Starting Vision Tracker loop (press ESC to quit)...")
 
     try:
         while cap.isOpened():
@@ -96,21 +116,28 @@ def main():
 
             img_h, img_w = frame.shape[:2]
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            results = face_mesh.process(frame_rgb)
+            mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame_rgb)
+
+            now_ms = int(time.time() * 1000)
+            if now_ms <= last_frame_timestamp_ms:
+                now_ms = last_frame_timestamp_ms + 1
+            last_frame_timestamp_ms = now_ms
+
+            results = detector.detect_for_video(mp_image, now_ms)
 
             cam_conf = 0.0
             gaze_dev = 0.0
             head_pose = 0.0
             ear = 0.0
 
-            if results.multi_face_landmarks:
-                landmarks = results.multi_face_landmarks[0].landmark
-                
+            if results.face_landmarks and len(results.face_landmarks) > 0:
+                landmarks = results.face_landmarks[0]
+
                 # Check ambient brightness in face region to model camera confidence
                 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                 mean_brightness = np.mean(gray)
                 if mean_brightness < 40:
-                    cam_conf = max(0.3, mean_brightness / 80.0) # Degraded in dim light
+                    cam_conf = max(0.3, mean_brightness / 80.0)  # Degraded in dim light
                 else:
                     cam_conf = 0.95
 
@@ -135,6 +162,11 @@ def main():
                 right_edge_x = landmarks[454].x
                 gaze_dev = abs((nose_x - left_edge_x) - (right_edge_x - nose_x)) * 100.0
                 head_pose = gaze_dev
+
+                # Draw green eye points for clear user feedback
+                for idx in LEFT_EYE + RIGHT_EYE:
+                    pt = (int(landmarks[idx].x * img_w), int(landmarks[idx].y * img_h))
+                    cv2.circle(frame, pt, 2, (0, 255, 0), -1)
 
                 # Visual feedback on local display
                 cv2.putText(frame, f'EAR: {ear:.2f} | Blinks: {blink_count} | Conf: {cam_conf:.2f}',
@@ -175,12 +207,13 @@ def main():
                 incomplete_blink_count = 0
                 last_publish = now
 
-            if cv2.waitKey(5) & 0xFF == 27: # ESC key
+            if cv2.waitKey(5) & 0xFF == 27:  # ESC key
                 break
 
     finally:
         cap.release()
         cv2.destroyAllWindows()
+        detector.close()
         client.loop_stop()
 
 if __name__ == '__main__':
