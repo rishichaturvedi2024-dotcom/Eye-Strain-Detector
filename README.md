@@ -164,3 +164,14 @@ Open **[http://localhost:5000](http://localhost:5000)** in your browser:
    - `server.py` ingests the batch, fuses features into $F$, computes $\Delta = F - B(U)$, detects risk $R > 0.60$, passes the receptivity gate, and publishes `"TRUE"` on `alert/user1`.
    - The ESP32 receives the command and sounds an **800 ms alert pulse**.
    - The dashboard updates in real time to show the elevated risk badge, updated trend point, and alert history entry.
+
+---
+
+## 7. Team Contributions & Division of Work
+
+| Member | Role | Core Modules & Key Deliverables | Contribution |
+| :--- | :--- | :--- | :---: |
+| **Rishi** *(Team Lead)* | **System Architect & ML/Backend Engineer** | End-to-end architecture design, central backend server (`backend/server.py`), 9D feature fusion, adaptive EWMA baseline tracking, ML model training & zero-leakage GroupShuffleSplit validation (`backend/train_model.py`), receptivity-gated alert dispatching, database schema (`backend/database.py`), broker orchestration (`mosquitto.conf`, `start_all.bat`). | **46%** |
+| **Aditya** | **Embedded Systems & IoT Hardware Engineer** | ESP32 circuit design & wiring, 1kΩ/2kΩ voltage divider protection for 5V echo, C++ firmware (`edge_device/main.ino`), HC-SR04 & BH1750 driver integration, autonomous offline threshold fail-safe, hardware-in-the-loop simulator (`edge_device/simulator.py`). | **27%** |
+| **Tiya** | **Computer Vision & UI/UX Dashboard Engineer** | MediaPipe FaceLandmarker companion vision tracker (`companion_app/vision_tracker.py`), Eye Aspect Ratio (EAR) blink and incomplete blink detection, gaze & posture estimation, privacy-preserving edge processing, Flask web dashboard & REST API (`dashboard/app.py`), student & supervisor cohort interfaces. | **27%** |
+

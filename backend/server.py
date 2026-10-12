@@ -339,12 +339,13 @@ def on_connect(client, userdata, flags, rc, properties=None):
         client.subscribe("behavior/+", qos=1)
         logger.info("Subscribed to telemetry/+ and behavior/+")
     else:
-        logger.error("Failed to connect to MQTT broker, return code: %d", rc)
+        logger.error("Failed to connect to MQTT broker, return code: %s", rc)
 
 
-def on_disconnect(client, userdata, rc, properties=None):
+def on_disconnect(client, userdata, *args, **kwargs):
+    rc = args[1] if len(args) > 1 else (args[0] if len(args) > 0 else 0)
     if rc != 0:
-        logger.warning("Unexpected MQTT disconnection (rc=%d). Client will auto-reconnect.", rc)
+        logger.warning("MQTT disconnection (rc=%s). Client will auto-reconnect.", rc)
     else:
         logger.info("Disconnected from MQTT broker.")
 

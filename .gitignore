@@ -25,3 +25,6 @@ Thumbs.db
 # MediaPipe models
 *.task
 
+# Temporary scratch logs
+scratch/
+
