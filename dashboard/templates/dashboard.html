@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Eye Strain Monitor - Student Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -38,7 +41,7 @@
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background-color: var(--bg-base);
-            background-image: 
+            background-image:
                 radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
                 radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.08) 0px, transparent 50%);
             color: var(--text-primary);
@@ -108,7 +111,8 @@
             transition: all 0.2s ease;
         }
 
-        .nav-button:hover, .nav-button.active {
+        .nav-button:hover,
+        .nav-button.active {
             color: var(--text-primary);
             background: rgba(99, 102, 241, 0.15);
             border-color: var(--border-highlight);
@@ -193,7 +197,7 @@
             font-weight: 700;
             font-family: 'JetBrains Mono', monospace;
             margin-bottom: 10px;
-            box-shadow: inset 0 0 12px rgba(0,0,0,0.2);
+            box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.2);
         }
 
         .status-badge-low {
@@ -216,9 +220,17 @@
         }
 
         @keyframes pulse-border {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
-            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+            0% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+            }
         }
 
         .live-pulse {
@@ -363,7 +375,8 @@
             transition: all 0.2s;
         }
 
-        .range-btn.active, .range-btn:hover {
+        .range-btn.active,
+        .range-btn:hover {
             background: rgba(255, 255, 255, 0.08);
             color: var(--text-primary);
         }
@@ -450,273 +463,285 @@
         }
     </style>
 </head>
+<!-- 
+  Author: Tiya Agrawal (24BDS0004)
+  Student Dashboard: Real-time risk status, 3 sensor gauges, 
+  20-20-20 break compliance widget, and Chart.js trend visualization
+-->
+
 <body>
 
-<div class="container">
-    <!-- Top Header -->
-    <header>
-        <div class="brand-section">
-            <div class="brand-icon">👁️</div>
-            <div class="brand-title">
-                <h1>Digital Eye Strain Monitor</h1>
-                <p>Real-Time Personalized Ocular Risk Assessment</p>
+    <div class="container">
+        <!-- Top Header -->
+        <header>
+            <div class="brand-section">
+                <div class="brand-icon">👁️</div>
+                <div class="brand-title">
+                    <h1>Digital Eye Strain Monitor</h1>
+                    <p>Real-Time Personalized Ocular Risk Assessment</p>
+                </div>
+            </div>
+
+            <div class="nav-links">
+                <label for="userSelect" style="font-size: 12px; color: var(--text-muted);">Active Student:</label>
+                <select id="userSelect" class="user-switcher"
+                    onchange="window.location.href='/dashboard/' + this.value">
+                    {% for u in all_users %}
+                    <option value="{{ u.user_id }}" {% if u.user_id==user.user_id %}selected{% endif %}>{{ u.name }} ({{
+                        u.user_id }})</option>
+                    {% endfor %}
+                </select>
+                <a href="/dashboard/supervisor" class="nav-button">Supervisor View 📊</a>
+            </div>
+        </header>
+
+        <!-- Hero Cards Row -->
+        <div class="hero-grid">
+            <!-- Live Risk Assessment Banner -->
+            <div class="glass-card risk-banner">
+                <div class="risk-info">
+                    <h2>Real-Time Risk State</h2>
+                    <div id="riskBadge" class="risk-badge-large status-badge-low">
+                        <span class="live-pulse"></span>
+                        <span id="riskScoreText">--</span>
+                    </div>
+                    <div class="risk-subtext" id="statusDescription">Awaiting live telemetry from ESP32 & camera...
+                    </div>
+                </div>
+
+                <div class="mini-stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-label">Viewing Distance</div>
+                        <div class="stat-value" id="valDistance">-- cm</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Ambient Light</div>
+                        <div class="stat-value" id="valLux">-- lx</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Blink Rate</div>
+                        <div class="stat-value" id="valBlink">-- /min</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Camera Conf.</div>
+                        <div class="stat-value" id="valConf">--</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Break Compliance Card -->
+            <div class="glass-card compliance-card">
+                <div>
+                    <div class="compliance-header">
+                        <h3>20-20-20 Break Compliance</h3>
+                        <span id="compliancePct"
+                            style="font-size: 18px; font-weight: 700; color: #10b981; font-family: 'JetBrains Mono', monospace;">--%</span>
+                    </div>
+                    <p style="font-size: 13px; color: var(--text-secondary);">
+                        Adherence to the clinical 20-20-20 rule helps maintain tear film integrity and prevents
+                        asthenopia.
+                    </p>
+                    <div class="progress-bar-container">
+                        <div id="progressBarFill" class="progress-bar-fill" style="width: 0%;"></div>
+                    </div>
+                    <div class="compliance-meta">
+                        <span>Breaks Taken: <strong id="breaksTaken">0</strong></span>
+                        <span>Target: <strong id="breaksRecommended">0</strong></span>
+                    </div>
+                </div>
+                <button class="log-break-btn" onclick="logBreakTaken()">+ Log Break Completed</button>
             </div>
         </div>
 
-        <div class="nav-links">
-            <label for="userSelect" style="font-size: 12px; color: var(--text-muted);">Active Student:</label>
-            <select id="userSelect" class="user-switcher" onchange="window.location.href='/dashboard/' + this.value">
-                {% for u in all_users %}
-                    <option value="{{ u.user_id }}" {% if u.user_id == user.user_id %}selected{% endif %}>{{ u.name }} ({{ u.user_id }})</option>
-                {% endfor %}
-            </select>
-            <a href="/dashboard/supervisor" class="nav-button">Supervisor View 📊</a>
-        </div>
-    </header>
-
-    <!-- Hero Cards Row -->
-    <div class="hero-grid">
-        <!-- Live Risk Assessment Banner -->
-        <div class="glass-card risk-banner">
-            <div class="risk-info">
-                <h2>Real-Time Risk State</h2>
-                <div id="riskBadge" class="risk-badge-large status-badge-low">
-                    <span class="live-pulse"></span>
-                    <span id="riskScoreText">--</span>
+        <!-- Risk Trend Chart Section -->
+        <div class="glass-card chart-section">
+            <div class="chart-header">
+                <div class="chart-title">Personalized Risk Trend vs Baseline Deviation</div>
+                <div class="range-toggle">
+                    <button class="range-btn active" onclick="setRange('7d', this)">7 Days</button>
+                    <button class="range-btn" onclick="setRange('30d', this)">30 Days</button>
                 </div>
-                <div class="risk-subtext" id="statusDescription">Awaiting live telemetry from ESP32 & camera...</div>
             </div>
-
-            <div class="mini-stats-grid">
-                <div class="stat-box">
-                    <div class="stat-label">Viewing Distance</div>
-                    <div class="stat-value" id="valDistance">-- cm</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-label">Ambient Light</div>
-                    <div class="stat-value" id="valLux">-- lx</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-label">Blink Rate</div>
-                    <div class="stat-value" id="valBlink">-- /min</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-label">Camera Conf.</div>
-                    <div class="stat-value" id="valConf">--</div>
-                </div>
+            <div class="chart-wrapper">
+                <canvas id="trendChart"></canvas>
             </div>
         </div>
 
-        <!-- Break Compliance Card -->
-        <div class="glass-card compliance-card">
-            <div>
-                <div class="compliance-header">
-                    <h3>20-20-20 Break Compliance</h3>
-                    <span id="compliancePct" style="font-size: 18px; font-weight: 700; color: #10b981; font-family: 'JetBrains Mono', monospace;">--%</span>
-                </div>
-                <p style="font-size: 13px; color: var(--text-secondary);">
-                    Adherence to the clinical 20-20-20 rule helps maintain tear film integrity and prevents asthenopia.
-                </p>
-                <div class="progress-bar-container">
-                    <div id="progressBarFill" class="progress-bar-fill" style="width: 0%;"></div>
-                </div>
-                <div class="compliance-meta">
-                    <span>Breaks Taken: <strong id="breaksTaken">0</strong></span>
-                    <span>Target: <strong id="breaksRecommended">0</strong></span>
-                </div>
-            </div>
-            <button class="log-break-btn" onclick="logBreakTaken()">+ Log Break Completed</button>
+        <!-- Alert History Table -->
+        <div class="glass-card table-section">
+            <h3>Recent Gated Alert Dispatches</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Risk Score</th>
+                        <th>Dispatch Type</th>
+                        <th>Receptivity Gate</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="alertTableBody">
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: var(--text-muted);">Loading alert history...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
+
+        <!-- Footer -->
+        <footer>
+            <div id="lastSyncText">Syncing with backend SQLite database...</div>
+            <div>Hardware: ESP32 + HC-SR04 (D5, D18) + BH1750 (D21, D22) + Active Buzzer (D23)</div>
+        </footer>
     </div>
 
-    <!-- Risk Trend Chart Section -->
-    <div class="glass-card chart-section">
-        <div class="chart-header">
-            <div class="chart-title">Personalized Risk Trend vs Baseline Deviation</div>
-            <div class="range-toggle">
-                <button class="range-btn active" onclick="setRange('7d', this)">7 Days</button>
-                <button class="range-btn" onclick="setRange('30d', this)">30 Days</button>
-            </div>
-        </div>
-        <div class="chart-wrapper">
-            <canvas id="trendChart"></canvas>
-        </div>
-    </div>
+    <script>
+        const USER_ID = "{{ user.user_id }}";
+        let currentRange = '7d';
 
-    <!-- Alert History Table -->
-    <div class="glass-card table-section">
-        <h3>Recent Gated Alert Dispatches</h3>
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Timestamp</th>
-                    <th>Risk Score</th>
-                    <th>Dispatch Type</th>
-                    <th>Receptivity Gate</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="alertTableBody">
-                <tr>
-                    <td colspan="5" style="text-align: center; color: var(--text-muted);">Loading alert history...</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+        // Chart.js initialization
+        const ctx = document.getElementById('trendChart').getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, 260);
+        gradient.addColorStop(0, 'rgba(99, 102, 241, 0.35)');
+        gradient.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
 
-    <!-- Footer -->
-    <footer>
-        <div id="lastSyncText">Syncing with backend SQLite database...</div>
-        <div>Hardware: ESP32 + HC-SR04 (D5, D18) + BH1750 (D21, D22) + Active Buzzer (D23)</div>
-    </footer>
-</div>
-
-<script>
-    const USER_ID = "{{ user.user_id }}";
-    let currentRange = '7d';
-
-    // Chart.js initialization
-    const ctx = document.getElementById('trendChart').getContext('2d');
-    const gradient = ctx.createLinearGradient(0, 0, 0, 260);
-    gradient.addColorStop(0, 'rgba(99, 102, 241, 0.35)');
-    gradient.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
-
-    const trendChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: [],
-            datasets: [{
-                label: 'Risk Score R = f_θ(F, Δ)',
-                data: [],
-                borderColor: '#6366f1',
-                backgroundColor: gradient,
-                borderWidth: 2.5,
-                pointRadius: 3,
-                pointBackgroundColor: '#06b6d4',
-                fill: true,
-                tension: 0.35
-            }, {
-                label: 'Threshold T(U) = 0.60',
-                data: [],
-                borderColor: 'rgba(239, 68, 68, 0.7)',
-                borderWidth: 1.5,
-                borderDash: [6, 4],
-                pointRadius: 0,
-                fill: false
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    labels: { color: '#94a3b8', font: { family: 'Inter', size: 12 } }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                    titleColor: '#f8fafc',
-                    bodyColor: '#cbd5e1',
-                    borderColor: 'rgba(255, 255, 255, 0.1)',
-                    borderWidth: 1
-                }
+        const trendChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Risk Score R = f_θ(F, Δ)',
+                    data: [],
+                    borderColor: '#6366f1',
+                    backgroundColor: gradient,
+                    borderWidth: 2.5,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#06b6d4',
+                    fill: true,
+                    tension: 0.35
+                }, {
+                    label: 'Threshold T(U) = 0.60',
+                    data: [],
+                    borderColor: 'rgba(239, 68, 68, 0.7)',
+                    borderWidth: 1.5,
+                    borderDash: [6, 4],
+                    pointRadius: 0,
+                    fill: false
+                }]
             },
-            scales: {
-                x: {
-                    grid: { color: 'rgba(255, 255, 255, 0.04)' },
-                    ticks: { color: '#64748b', maxTicksLimit: 8 }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { color: '#94a3b8', font: { family: 'Inter', size: 12 } }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        titleColor: '#f8fafc',
+                        bodyColor: '#cbd5e1',
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 1
+                    }
                 },
-                y: {
-                    min: 0.0,
-                    max: 1.0,
-                    grid: { color: 'rgba(255, 255, 255, 0.06)' },
-                    ticks: { color: '#64748b' }
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255, 255, 255, 0.04)' },
+                        ticks: { color: '#64748b', maxTicksLimit: 8 }
+                    },
+                    y: {
+                        min: 0.0,
+                        max: 1.0,
+                        grid: { color: 'rgba(255, 255, 255, 0.06)' },
+                        ticks: { color: '#64748b' }
+                    }
                 }
             }
+        });
+
+        // 1. Fetch Current Risk & Mini Stats
+        async function fetchCurrentRisk() {
+            try {
+                const res = await fetch(`/api/current_risk/${USER_ID}`);
+                const data = await res.json();
+
+                const score = data.risk_score;
+                document.getElementById('riskScoreText').innerText = score.toFixed(2);
+
+                const badge = document.getElementById('riskBadge');
+                badge.className = 'risk-badge-large';
+                const desc = document.getElementById('statusDescription');
+
+                if (score >= 0.60) {
+                    badge.classList.add('status-badge-high');
+                    desc.innerHTML = `<span style="color: #ef4444; font-weight:600;">⚠️ HIGH RISK:</span> Strain breach detected! Receptivity gate active.`;
+                } else if (score >= 0.40) {
+                    badge.classList.add('status-badge-moderate');
+                    desc.innerHTML = `<span style="color: #f59e0b; font-weight:600;">MODERATE RISK:</span> Fatigue accumulating. Blink rate or distance deviating.`;
+                } else {
+                    badge.classList.add('status-badge-low');
+                    desc.innerHTML = `<span style="color: #10b981; font-weight:600;">SAFE / COMFORTABLE:</span> Operating within ergonomic baseline.`;
+                }
+
+                if (data.d_avg !== undefined && data.d_avg !== null) {
+                    document.getElementById('valDistance').innerText = `${data.d_avg.toFixed(1)} cm`;
+                }
+                if (data.l_avg !== undefined && data.l_avg !== null) {
+                    document.getElementById('valLux').innerText = `${data.l_avg.toFixed(0)} lx`;
+                }
+                if (data.blink_rate !== undefined && data.blink_rate !== null) {
+                    document.getElementById('valBlink').innerText = `${data.blink_rate.toFixed(1)} /min`;
+                }
+                if (data.cam_conf !== undefined && data.cam_conf !== null) {
+                    document.getElementById('valConf').innerText = `${data.cam_conf.toFixed(2)}`;
+                }
+
+                document.getElementById('lastSyncText').innerText = `Last updated: ${new Date().toLocaleTimeString()} (Polling every 10s)`;
+            } catch (e) {
+                console.error("Error fetching current risk:", e);
+            }
         }
-    });
 
-    // 1. Fetch Current Risk & Mini Stats
-    async function fetchCurrentRisk() {
-        try {
-            const res = await fetch(`/api/current_risk/${USER_ID}`);
-            const data = await res.json();
+        // 2. Fetch Risk Trend for Chart.js
+        async function fetchRiskTrend() {
+            try {
+                const res = await fetch(`/api/risk_trend/${USER_ID}?range=${currentRange}`);
+                const data = await res.json();
 
-            const score = data.risk_score;
-            document.getElementById('riskScoreText').innerText = score.toFixed(2);
+                const labels = data.timestamps.map(ts => {
+                    const d = new Date(ts);
+                    return `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
+                });
 
-            const badge = document.getElementById('riskBadge');
-            badge.className = 'risk-badge-large';
-            const desc = document.getElementById('statusDescription');
-
-            if (score >= 0.60) {
-                badge.classList.add('status-badge-high');
-                desc.innerHTML = `<span style="color: #ef4444; font-weight:600;">⚠️ HIGH RISK:</span> Strain breach detected! Receptivity gate active.`;
-            } else if (score >= 0.40) {
-                badge.classList.add('status-badge-moderate');
-                desc.innerHTML = `<span style="color: #f59e0b; font-weight:600;">MODERATE RISK:</span> Fatigue accumulating. Blink rate or distance deviating.`;
-            } else {
-                badge.classList.add('status-badge-low');
-                desc.innerHTML = `<span style="color: #10b981; font-weight:600;">SAFE / COMFORTABLE:</span> Operating within ergonomic baseline.`;
+                trendChart.data.labels = labels;
+                trendChart.data.datasets[0].data = data.risk_scores;
+                trendChart.data.datasets[1].data = labels.map(() => 0.60);
+                trendChart.update();
+            } catch (e) {
+                console.error("Error fetching risk trend:", e);
             }
-
-            if (data.d_avg !== undefined && data.d_avg !== null) {
-                document.getElementById('valDistance').innerText = `${data.d_avg.toFixed(1)} cm`;
-            }
-            if (data.l_avg !== undefined && data.l_avg !== null) {
-                document.getElementById('valLux').innerText = `${data.l_avg.toFixed(0)} lx`;
-            }
-            if (data.blink_rate !== undefined && data.blink_rate !== null) {
-                document.getElementById('valBlink').innerText = `${data.blink_rate.toFixed(1)} /min`;
-            }
-            if (data.cam_conf !== undefined && data.cam_conf !== null) {
-                document.getElementById('valConf').innerText = `${data.cam_conf.toFixed(2)}`;
-            }
-
-            document.getElementById('lastSyncText').innerText = `Last updated: ${new Date().toLocaleTimeString()} (Polling every 10s)`;
-        } catch (e) {
-            console.error("Error fetching current risk:", e);
         }
-    }
 
-    // 2. Fetch Risk Trend for Chart.js
-    async function fetchRiskTrend() {
-        try {
-            const res = await fetch(`/api/risk_trend/${USER_ID}?range=${currentRange}`);
-            const data = await res.json();
+        // 3. Fetch Alert History
+        async function fetchAlertHistory() {
+            try {
+                const res = await fetch(`/api/alert_history/${USER_ID}?limit=8`);
+                const alerts = await res.json();
+                const tbody = document.getElementById('alertTableBody');
 
-            const labels = data.timestamps.map(ts => {
-                const d = new Date(ts);
-                return `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
-            });
+                if (!alerts || alerts.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No alerts triggered yet. Workspace is currently within safe limits.</td></tr>`;
+                    return;
+                }
 
-            trendChart.data.labels = labels;
-            trendChart.data.datasets[0].data = data.risk_scores;
-            trendChart.data.datasets[1].data = labels.map(() => 0.60);
-            trendChart.update();
-        } catch (e) {
-            console.error("Error fetching risk trend:", e);
-        }
-    }
+                tbody.innerHTML = alerts.map(a => {
+                    const dateStr = new Date(a.timestamp).toLocaleString();
+                    const typeClass = a.dispatch_type === 'immediate' ? 'badge-immediate' : 'badge-deferred';
+                    const receptiveIcon = a.receptive ? '✓ Receptive' : '⏳ Deferred (Holding)';
+                    const receptiveClass = a.receptive ? 'badge-receptive-true' : 'badge-receptive-false';
 
-    // 3. Fetch Alert History
-    async function fetchAlertHistory() {
-        try {
-            const res = await fetch(`/api/alert_history/${USER_ID}?limit=8`);
-            const alerts = await res.json();
-            const tbody = document.getElementById('alertTableBody');
-
-            if (!alerts || alerts.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No alerts triggered yet. Workspace is currently within safe limits.</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = alerts.map(a => {
-                const dateStr = new Date(a.timestamp).toLocaleString();
-                const typeClass = a.dispatch_type === 'immediate' ? 'badge-immediate' : 'badge-deferred';
-                const receptiveIcon = a.receptive ? '✓ Receptive' : '⏳ Deferred (Holding)';
-                const receptiveClass = a.receptive ? 'badge-receptive-true' : 'badge-receptive-false';
-
-                return `
+                    return `
                     <tr>
                         <td>${dateStr}</td>
                         <td style="font-family: 'JetBrains Mono', monospace; font-weight: 600;">${a.risk_score.toFixed(2)}</td>
@@ -725,55 +750,56 @@
                         <td><a href="/dashboard/supervisor" style="color: var(--accent-cyan); text-decoration: none; font-size: 12px;">Drill Down →</a></td>
                     </tr>
                 `;
-            }).join('');
-        } catch (e) {
-            console.error("Error fetching alert history:", e);
+                }).join('');
+            } catch (e) {
+                console.error("Error fetching alert history:", e);
+            }
         }
-    }
 
-    // 4. Fetch Break Compliance
-    async function fetchBreakCompliance() {
-        try {
-            const res = await fetch(`/api/break_compliance/${USER_ID}`);
-            const data = await res.json();
+        // 4. Fetch Break Compliance
+        async function fetchBreakCompliance() {
+            try {
+                const res = await fetch(`/api/break_compliance/${USER_ID}`);
+                const data = await res.json();
 
-            document.getElementById('compliancePct').innerText = `${data.compliance_pct}%`;
-            document.getElementById('progressBarFill').style.width = `${Math.min(100, data.compliance_pct)}%`;
-            document.getElementById('breaksTaken').innerText = data.breaks_taken;
-            document.getElementById('breaksRecommended').innerText = data.breaks_recommended;
-        } catch (e) {
-            console.error("Error fetching break compliance:", e);
+                document.getElementById('compliancePct').innerText = `${data.compliance_pct}%`;
+                document.getElementById('progressBarFill').style.width = `${Math.min(100, data.compliance_pct)}%`;
+                document.getElementById('breaksTaken').innerText = data.breaks_taken;
+                document.getElementById('breaksRecommended').innerText = data.breaks_recommended;
+            } catch (e) {
+                console.error("Error fetching break compliance:", e);
+            }
         }
-    }
 
-    // Log Break Action
-    async function logBreakTaken() {
-        try {
-            await fetch(`/api/record_break/${USER_ID}`, { method: 'POST' });
-            await fetchBreakCompliance();
-        } catch (e) {
-            console.error("Error logging break:", e);
+        // Log Break Action
+        async function logBreakTaken() {
+            try {
+                await fetch(`/api/record_break/${USER_ID}`, { method: 'POST' });
+                await fetchBreakCompliance();
+            } catch (e) {
+                console.error("Error logging break:", e);
+            }
         }
-    }
 
-    function setRange(range, btn) {
-        currentRange = range;
-        document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        fetchRiskTrend();
-    }
+        function setRange(range, btn) {
+            currentRange = range;
+            document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            fetchRiskTrend();
+        }
 
-    // Initial Load & Auto-Refresh Interval (every 10 seconds for live hardware feel)
-    function refreshAll() {
-        fetchCurrentRisk();
-        fetchRiskTrend();
-        fetchAlertHistory();
-        fetchBreakCompliance();
-    }
+        // Initial Load & Auto-Refresh Interval (every 10 seconds for live hardware feel)
+        function refreshAll() {
+            fetchCurrentRisk();
+            fetchRiskTrend();
+            fetchAlertHistory();
+            fetchBreakCompliance();
+        }
 
-    refreshAll();
-    setInterval(refreshAll, 10000);
-</script>
+        refreshAll();
+        setInterval(refreshAll, 10000);
+    </script>
 
 </body>
+
 </html>
