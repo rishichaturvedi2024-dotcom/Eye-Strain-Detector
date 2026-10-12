@@ -1,20 +1,8 @@
-"""
-Flask Web Dashboard - Digital Eye Strain Risk Monitoring System
-================================================================
-Endpoints:
-  - GET  /                                  -> Redirects to /dashboard/user1
-  - GET  /dashboard/<user_id>               -> Student View
-  - GET  /dashboard/supervisor              -> Supervisor View (multi-student)
-  - GET  /dashboard/session/<session_id>    -> Session Detail / Algorithmic Drill-Down
-  - GET  /api/current_risk/<user_id>        -> Latest session's risk score + timestamp + status
-  - GET  /api/risk_trend/<user_id>          -> Timestamps & risk scores for Chart.js
-  - GET  /api/alert_history/<user_id>       -> List of past alerts (immediate/deferred)
-  - GET  /api/break_compliance/<user_id>    -> Break-taking compliance stats
-  - GET  /api/session_detail/<session_id>   -> Full feature vector + baseline deviation
-  - GET  /api/users                         -> List of registered users
-  - GET  /api/supervisor_summary            -> Overview summary across all users
-  - POST /api/record_break/<user_id>        -> Log break taken
-"""
+# =========================================================================
+# Author: Tiya Agrawal (24BDS0004) - Dashboard & REST API Architecture
+# Route Handlers: Student view, supervisor cohort monitoring, and session drill-down
+# =========================================================================
+
 
 import os
 import sys
