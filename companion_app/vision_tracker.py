@@ -1,16 +1,9 @@
-"""
-Companion Device Vision Tracker - On-Device Ocular & Posture Extraction
-========================================================================
-Uses MediaPipe FaceLandmarker Tasks API on local video feed to compute:
-  - Eye Aspect Ratio (EAR) for blink detection and incomplete blink ratio
-  - Gaze deviation metric (relative iris / pupil displacement)
-  - Head pose displacement
-  - Camera confidence score (downweights in low light or occlusion)
+# Author: Tiya Agrawal (24BDS0004)
+# Role: Computer Vision Engineer
+# Reference: Soukupova and Cech (2016) EAR Eye Landmark Formulation
+# EAR = (|P2-P6| + |P3-P5|) / (2 * |P1-P4|)
+# Full blink threshold: EAR < 0.20; Incomplete blink band: 0.20 <= EAR < 0.26
 
-Note on Privacy Architecture:
-  Raw camera frames are processed on-device in memory and immediately discarded.
-  Only numerical features are published over MQTT to the backend broker.
-"""
 
 import os
 import cv2
