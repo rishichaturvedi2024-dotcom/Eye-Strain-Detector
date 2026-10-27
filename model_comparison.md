@@ -115,3 +115,4 @@ Training Partition (80%)        Testing Partition (20%)
 ```
 
 In physiological machine learning, standard random train/test splits artificially inflate metrics because the model memorizes an individual's unique resting parameters. By grouping strictly by `user_id`, the reported **86.48% accuracy and 0.9182 ROC-AUC represent true generalization performance on unseen human subjects**.
+
