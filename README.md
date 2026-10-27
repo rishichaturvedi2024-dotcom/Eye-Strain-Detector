@@ -84,7 +84,24 @@ The model is trained strictly on **empirical biometric and environmental trainin
 - **Sensor Noise Modeling**: Includes true ultrasonic distance echo jitter ($\pm 3\text{--}5\text{ cm}$), inverse-square ambient illuminance variance, and optical confidence degradation in low light.
 - **Standardization**: `StandardScaler` fitted strictly on the training partition and serialized to `scaler.joblib`.
 
-### Validated Model Evaluation (Random Forest Classifier):
+### Machine Learning Architecture Benchmark & Model Selection:
+
+We evaluated 8 diverse classification architectures on the empirical benchmark dataset under identical 0-leakage participant-level partitions. For complete architectural trade-offs, confusion matrices, and radar analysis, see the dedicated [model_comparison.md](model_comparison.md).
+
+| Model Architecture | Accuracy | High-Risk Precision | High-Risk Recall | F1-Score | ROC-AUC | Inference Latency | Status |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Random Forest (Production)** | **86.48%** | 0.7278 | **0.8200** | **0.7712** | **0.9182** | 0.030 ms | ⭐ **Selected** |
+| **XGBoost Classifier** | **87.96%** | 0.8244 | 0.7200 | 0.7687 | 0.9172 | 0.004 ms | Candidate |
+| **Support Vector Machine (RBF)** | **88.70%** | **0.8560** | 0.7133 | **0.7782** | 0.8839 | 0.035 ms | Benchmark |
+| **Gradient Boosting (GBM)** | 86.85% | 0.7801 | 0.7333 | 0.7560 | 0.9176 | 0.003 ms | Benchmark |
+| **k-Nearest Neighbors ($k=7$)** | 87.59% | 0.8168 | 0.7133 | 0.7616 | 0.9035 | 0.104 ms | Benchmark |
+| **Logistic Regression (Linear)** | 84.81% | 0.6771 | **0.8667** | 0.7602 | 0.9144 | <0.001 ms | Benchmark |
+| **Decision Tree (CART)** | 85.74% | 0.8067 | 0.6400 | 0.7138 | 0.8725 | 0.001 ms | Benchmark |
+| **Multi-Layer Perceptron (MLP)** | 84.26% | 0.7273 | 0.6933 | 0.7099 | 0.8620 | 0.003 ms | Benchmark |
+
+> **Selection Rationale:** Random Forest was chosen for production deployment because it achieves the highest **ROC-AUC (0.9182)** and captures **82.00% of all true high-strain episodes** (vital for preventing unmitigated visual fatigue) while maintaining microsecond inference latency (0.030 ms) and native Mean Decrease in Impurity (MDI) feature explainability.
+
+### Validated Production Model Evaluation (Random Forest Classifier):
 - **Accuracy**: **86.48%** (matches realistic human biometric literature standards)
 - **ROC-AUC**: **0.9182**
 - **High-Risk Recall**: **82.00%** (critical for catching true strain episodes)
