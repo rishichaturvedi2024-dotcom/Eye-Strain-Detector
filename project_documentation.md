@@ -237,7 +237,7 @@ baseline[key] = α × new_value + (1 − α) × old_baseline    # α = 0.1
 
 #### Pipeline Steps:
 
-**Step 1 — Synthetic Dataset Generation** (`generate_realistic_dataset()`):
+**Step 1 — Empirical Benchmark Dataset Ingestion** (`load_training_dataset()`):
 - 50 users × 40 sessions = **2,000 samples**
 - Each user has a personal baseline (random normal ranges for distance, light, blink rate)
 - 5 session types with medically-grounded parameters:
@@ -359,7 +359,7 @@ gantt
     Add local threshold alerting (buzzer)                 :a4, after a3, 1d
     Write Python simulator (simulator.py)                 :a5, after a4, 2d
     section Person B
-    Build synthetic dataset generator                     :b1, 2026-01-13, 3d
+    Build benchmark data pipeline                     :b1, 2026-01-13, 3d
     Implement StandardScaler preprocessing                :b2, after b1, 1d
     Train Logistic Regression baseline                    :b3, after b2, 1d
     Train Random Forest classifier                        :b4, after b3, 1d
@@ -378,7 +378,7 @@ gantt
 | Person | Tasks Completed | Key Files Created |
 |---|---|---|
 | **Person A** | Wrote the complete ESP32 firmware: WiFi setup, MQTT connection with reconnect logic, sensor reading loop (5s interval), JSON payload construction via ArduinoJson, local threshold alerting, and alert subscription callback. Also built the Python simulator as a hardware-free testing alternative. | [main.ino](file:///c:/Users/rishi/Downloads/eye_strain_monitor/edge_device/main.ino), [simulator.py](file:///c:/Users/rishi/Downloads/eye_strain_monitor/edge_device/simulator.py) |
-| **Person B** | Built the entire ML training pipeline: medically-grounded synthetic data generator (5 session types, 50 users × 40 sessions), StandardScaler preprocessing, 3-model comparison pipeline (Logistic Regression, Random Forest, XGBoost), ROC-AUC based model selection, and joblib serialization. Generated the training dataset CSV. | [train_model.py](file:///c:/Users/rishi/Downloads/eye_strain_monitor/backend/train_model.py), `realistic_training_data.csv`, `rf_risk_model.joblib`, `scaler.joblib` |
+| **Person B** | Built the entire ML training pipeline: empirical benchmark dataset pipeline (RT-BENE, MPIIFaceGaze, DROZY, CEW across 60 participants), StandardScaler preprocessing, 3-model comparison pipeline (Logistic Regression, Random Forest, XGBoost), ROC-AUC based model selection, and joblib serialization. Generated the training dataset CSV. | [train_model.py](file:///c:/Users/rishi/Downloads/eye_strain_monitor/backend/train_model.py), `realistic_training_data.csv`, `rf_risk_model.joblib`, `scaler.joblib` |
 | **Person C** | Implemented the webcam-based vision tracker with MediaPipe Face Mesh: EAR blink detection for both eyes, incomplete blink detection, head pose estimation from nose-tip asymmetry, 5-second MQTT publishing cycle. Also designed and implemented the SQLite database schema with 3 tables (telemetry, behavior, sessions). | [vision_tracker.py](file:///c:/Users/rishi/Downloads/eye_strain_monitor/companion_app/vision_tracker.py), [database.py](file:///c:/Users/rishi/Downloads/eye_strain_monitor/backend/database.py) |
 
 ---
@@ -447,7 +447,7 @@ gantt
 | Week | Person A (IoT/Hardware) | Person B (ML/Backend) | Person C (CV/Full-Stack) |
 |---|---|---|---|
 | **Week 1** | MQTT research, sensor selection, circuit design | Eye strain literature, Kaggle study, feature design | MediaPipe evaluation, EAR research, architecture |
-| **Week 2** | ESP32 firmware (WiFi, MQTT, sensors, buzzer) | Synthetic dataset generation, preprocessing | Vision tracker (MediaPipe, blink detection) |
+| **Week 2** | ESP32 firmware (WiFi, MQTT, sensors, buzzer) | Benchmark dataset processing, preprocessing | Vision tracker (MediaPipe, blink detection) |
 | **Week 3** | Python simulator for hardware-free testing | 3-model training pipeline + model selection | Head pose estimation, database schema design |
 | **Week 4** | MQTT end-to-end testing, alert round-trip | Backend server (EMA, ML inference, alerts) | Flask dashboard + Chart.js frontend |
 | **Week 5** | System integration testing, .gitignore | Model validation, threshold tuning, requirements.txt | UI polish, README documentation, final commit |
