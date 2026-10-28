@@ -28,3 +28,6 @@ Thumbs.db
 # Temporary scratch logs
 scratch/
 
+# Data & CSV files
+*.csv
+backend/*.csv
